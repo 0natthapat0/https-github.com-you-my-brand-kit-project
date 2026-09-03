@@ -1,0 +1,58 @@
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  background-color: var(--ui-background);
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--ui-01);
+  border: 1px solid var(--line-01);
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 8px !important;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: var(--text-02);
+  margin-bottom: 32px;
+}
+
+nx-formfield {
+  width: 100%;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.login-btn {
+  width: 100%;
+}
+
+.login-register {
+  text-align: center;
+  margin-top: 24px;
+  color: var(--text-02);
+}

@@ -1,0 +1,767 @@
+<div class="coverages-page">
+
+  <!-- ── Submission currency (Control) ────────────────────────── -->
+  <div class="ins-submission-currency-bar">
+    <span class="meta-label" style="color:#2e7d32">Submission currency (Control):</span>
+    <div class="meta-currency-select-wrap" (click)="openSubmissionCurrencyFlyout($event)">
+      <button type="button" class="meta-currency-select meta-currency-trigger">{{ selectedCurrency }}</button>
+      <nx-icon name="chevron-down" class="meta-currency-chevron"></nx-icon>
+    </div>
+
+    <span class="meta-label" style="color:#2e7d32">LOBs:</span>
+    <div class="meta-currency-select-wrap" (click)="openLobFlyout($event)">
+      <button type="button" class="meta-currency-select meta-currency-trigger">{{ selectedLob }}</button>
+      <nx-icon name="chevron-down" class="meta-currency-chevron"></nx-icon>
+    </div>
+
+    <button class="currency-bar-chat-btn" type="button" (click)="toggleCommentMode($event)" [class.active]="commentModeActive" title="Add comment">
+      <nx-icon name="speech-bubble-o"></nx-icon>
+    </button>
+  </div>
+
+  <div class="ins-section-divider"></div>
+
+  <!-- ── Top bar ───────────────────────────────────────────────── -->
+  <div class="top-bar">
+    <ol nxBreadcrumb>
+      <li nxBreadcrumbItem><a>Client name</a></li>
+      <li nxBreadcrumbItem><a>Submission ID</a></li>
+      <li nxBreadcrumbItem><a>Page name</a></li>
+    </ol>
+
+    <div class="top-bar-right">
+      <span class="tb-label">Submission:</span>
+      <span class="status-tag">In Progress</span>
+
+      <button class="alt-dropdown" type="button">
+        <span>Alt: 001</span>
+        <nx-icon class="tb-chevron" name="chevron-down"></nx-icon>
+      </button>
+
+      <span class="status-tag">In Progress</span>
+
+      <button nxAvatar size="small" type="button">JD</button>
+      <nx-icon class="tb-chevron" name="chevron-down"></nx-icon>
+
+      <button class="tb-icon-btn" type="button" (click)="toggleCommentsPanel()" [class.active]="errorPanelOpen && errorPanelTab === 'comments'" title="Comments">
+        <nx-icon name="chat-o"></nx-icon>
+      </button>
+
+      <button class="tb-icon-btn" type="button" (click)="errorPanelOpen = !errorPanelOpen" [class.active]="errorPanelOpen">
+        <nx-icon name="side-panel-right"></nx-icon>
+        <span class="notif-dot" *ngIf="saveAttempted && pageErrors.length > 0"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Comment placement overlay ─────────────────────────────── -->
+  <div class="comment-mode-overlay" *ngIf="commentModeActive" (click)="onCommentModeOverlayClick($event)"></div>
+
+  <!-- ── Page body ─────────────────────────────────────────────── -->
+  <div class="page-body">
+
+    <!-- Main content -->
+    <div class="page-main">
+
+      <!-- ── Comment pins (placed) ────────────────────────────────── -->
+      <div class="comment-pin"
+        *ngFor="let c of comments"
+        [attr.data-comment-id]="c.id"
+        [class.comment-pin--hidden]="c.x == null || c.y == null || (c.tab && c.tab !== activeTab)"
+        [style.left.px]="c.x"
+        [style.top.px]="c.y"
+        [class.active]="c.id === highlightedCommentId"
+        (click)="onPinClick(c, $event)"
+        title="{{ c.author }}: {{ c.text }}">
+        {{ c.pinNumber }}
+      </div>
+
+      <!-- ── Pending comment pin + popover ────────────────────────── -->
+      <ng-container *ngIf="pendingComment">
+        <div class="comment-pin comment-pin--pending"
+          [style.left.px]="pendingComment.x"
+          [style.top.px]="pendingComment.y"
+          (click)="$event.stopPropagation()">
+          <nx-icon name="chat-o"></nx-icon>
+        </div>
+        <div class="comment-pin-popover" [ngStyle]="pendingPopoverStyle" (click)="$event.stopPropagation()">
+          <textarea class="comment-input" rows="2" placeholder="Leave feedback..."
+            [(ngModel)]="newPinCommentText"
+            (keydown.enter)="$event.preventDefault(); submitPendingComment()"></textarea>
+          <div class="comment-pin-popover-actions">
+            <button nxButton="secondary small" type="button" (click)="cancelPendingComment()">Cancel</button>
+            <button nxButton="primary small" type="button" [disabled]="!newPinCommentText.trim()" (click)="submitPendingComment()">Comment</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ── Page header ───────────────────────────────────────── -->
+      <div class="ins-header">
+        <div class="ins-header-top">
+          <div class="ins-title-wrap">
+            <h1 class="ins-title">Insurance Coverage</h1>
+            <span class="status-pill" [class.status-pill--saved]="isSaved" [class.status-pill--unsaved]="!isSaved">
+              {{ isSaved ? 'Saved' : 'Unsaved' }}
+            </span>
+            <button *ngIf="isSaved" class="reset-to-unsaved-btn" type="button" (click)="resetToUnsaved()">Reset to unsave</button>
+          </div>
+          <div class="ins-header-actions">
+            <ng-container *ngIf="!isDraft">
+              <button class="save-draft-btn" type="button" (click)="saveDraft()">Save draft</button>
+              <button nxButton="secondary small" type="button">Cancel</button>
+              <button nxButton="primary small" type="button" (click)="save()">Save</button>
+            </ng-container>
+            <button *ngIf="isDraft" nxButton="primary small" type="button" (click)="exitDraft()">Edit</button>
+          </div>
+        </div>
+
+        <div class="ins-meta">
+          <span class="meta-item"><span class="meta-label">Product template:</span> {{ productTemplateLabel }}</span>
+          <span class="meta-item"><span class="meta-label">Coverage basis:</span> All-Risk</span>
+          <a class="meta-link" href="javascript:void(0)">See details</a>
+          <span class="meta-item"><span class="meta-label">Covered sections:</span> {{ coveredSectionsLabel }}</span>
+
+          <button class="meta-edit-btn" type="button" title="Edit">
+            <nx-icon name="pencil-o" style="font-size:16px"></nx-icon>
+          </button>
+        </div>
+
+        <div class="ins-tabs">
+          <button class="ins-tab" [class.active]="activeTab === 'overall'" (click)="activeTab = 'overall'" type="button">
+            Overall Limits/Deductibles
+          </button>
+          <button class="ins-tab" *ngIf="selectedLob === 'Marine Cargo'" disabled type="button">
+            Coverage Sublimits/Deductibles
+          </button>
+          <button class="ins-tab" [class.active]="activeTab === 'sublimits'" (click)="activeTab = 'sublimits'" type="button">
+            {{ sublimitsTabLabel }}
+            <span class="tab-error-dot" *ngIf="saveAttempted && pageErrors.length > 0"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Overall Limits/Deductibles tab ──────────────────── -->
+      <ng-container *ngIf="activeTab === 'overall'">
+        <div class="overall-tab-body">
+
+          <!-- ── Currency change banner ───────────────────────────────── -->
+          <nx-message context="info" *ngIf="showCurrencyMessage" class="draft-banner" [closable]="true" (closeEvent)="showCurrencyMessage = false">
+            Submission Currency has changed from <strong>{{ previousCurrency }}</strong> to <strong>{{ selectedCurrency }}</strong> at the Submission level. Values below will still show the saved currency until they are updated.
+          </nx-message>
+
+          <!-- ── Draft banner ─────────────────────────────────────── -->
+          <nx-message context="info" *ngIf="isDraft && lockedMode === 'draft'" class="draft-banner">
+            <strong>This is draft version.</strong><br>
+            The coverage has not been priced.
+          </nx-message>
+
+          <!-- ── Change overall currency (Version 2) ─────────────────── -->
+          <div class="overall-currency-bar" *ngIf="tableVersion === 'v3'">
+            <span class="occ-label">Overall Limits/Deductibles currency</span>
+            <div class="occ-row">
+              <div class="meta-currency-select-wrap" [class.meta-currency-select-wrap--readonly]="isDraft" (click)="openOverallCurrencyFlyout($event)">
+                <button type="button" class="meta-currency-select meta-currency-trigger" [disabled]="isDraft">{{ overallCurrencyLabel }}</button>
+                <nx-icon name="chevron-down" class="meta-currency-chevron"></nx-icon>
+              </div>
+              <button
+                type="button"
+                nxIconButton="tertiary small"
+                aria-label="More information"
+                [nxPopoverTriggerFor]="overallCurrencyInfoPop"
+                nxPopoverDirection="bottom"
+              >
+                <nx-icon name="info-circle-o"></nx-icon>
+              </button>
+            </div>
+            <nx-popover #overallCurrencyInfoPop nxPopoverWidth="260">When you change the currency here, it will automatically apply to both Overall Limits and Deductibles.</nx-popover>
+          </div>
+
+          <!-- Overall Limits section -->
+          <div class="overall-section">
+            <h2 class="overall-section-title">Overall Limits</h2>
+            <p class="overall-section-sub">Limits - All entries are 100%</p>
+
+            <div class="overall-grid-scroll">
+              <ag-grid-angular
+                class="overall-grid"
+                [theme]="theme"
+                [rowData]="limitsRowData"
+                [columnDefs]="limitsColDefs"
+                [defaultColDef]="overallGridDefaultColDef"
+                [domLayout]="'autoHeight'"
+                [getRowId]="getLimitsRowId"
+                [style.width]="limitsGridWidth"
+                [singleClickEdit]="true"
+                (gridReady)="onLimitsGridReady($event)"
+                (columnResized)="onLimitsColumnResized($event)"
+                (cellValueChanged)="onLimitsCellValueChanged($event)"
+                (cellClicked)="onLimitsCellClicked($event)"
+                (cellContextMenu)="onGridCellContextMenu($event, 'limits')"
+                (contextmenu)="$event.preventDefault()"
+              />
+            </div>
+          </div>
+
+          <!-- Overall Deductibles section -->
+          <div class="overall-section">
+            <h2 class="overall-section-title">Overall Deductibles</h2>
+            <p class="overall-section-sub">Deductibles - All entries are 100%</p>
+
+            <div class="overall-grid-scroll">
+              <ag-grid-angular
+                class="overall-grid"
+                [theme]="theme"
+                [rowData]="deductiblesRowData"
+                [columnDefs]="deductiblesColDefs"
+                [defaultColDef]="overallGridDefaultColDef"
+                [domLayout]="'autoHeight'"
+                [getRowId]="getDeductiblesRowId"
+                [style.width]="deductiblesGridWidth"
+                [singleClickEdit]="true"
+                (gridReady)="onDeductiblesGridReady($event)"
+                (columnResized)="onDeductiblesColumnResized($event)"
+                (cellValueChanged)="onDeductiblesCellValueChanged($event)"
+                (cellClicked)="onDeductiblesCellClicked($event)"
+                (cellContextMenu)="onGridCellContextMenu($event, 'deductibles')"
+                (contextmenu)="$event.preventDefault()"
+              />
+            </div>
+          </div>
+
+        </div>
+      </ng-container>
+
+      <!-- ── Coverage Sublimits/Deductibles tab ────────────────── -->
+      <ng-container *ngIf="activeTab === 'coverage' || (activeTab === 'sublimits' && selectedLob !== 'Marine Cargo')">
+
+      <!-- Toolbar -->
+      <div class="page-toolbar">
+        <div class="toolbar-left">
+          <div class="view-dropdown-wrapper">
+            <button class="view-trigger" (click)="toggleViewDropdown($event)">
+              <span class="view-label-text">View:</span>
+              <span class="view-active-name" [class.view-active-name--custom]="isColumnModified">{{ viewDisplayName }}</span>
+              <nx-icon class="view-arrow" [name]="viewDropdownOpen ? 'chevron-up' : 'chevron-down'"></nx-icon>
+            </button>
+
+            <div class="view-dropdown" *ngIf="viewDropdownOpen" (click)="$event.stopPropagation()">
+              <ul class="view-list">
+                <li *ngFor="let view of sortedViews" class="view-item"
+                  [class.active]="view.id === activeViewId"
+                  (click)="applyView(view, $event)">
+                  <span class="view-name">{{ view.name }}</span>
+                  <span *ngIf="view.isDefault" class="default-badge">Default</span>
+                </li>
+              </ul>
+              <div class="view-divider"></div>
+              <button class="view-action-btn" (click)="openSaveView($event)">Save current view</button>
+              <button class="view-action-btn" (click)="openManageViews($event)">Manage views</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <button class="clear-filters-btn" (click)="clearAllFilters()" [disabled]="activeFilterCount === 0">
+            Clear all filters
+          </button>
+          <div class="toolbar-icon-group" *ngIf="!sublimitsLocked">
+            <button nxIconButton="tertiary small" type="button" title="Delete">
+              <nx-icon name="trash-o"></nx-icon>
+            </button>
+            <button nxIconButton="tertiary small" type="button" title="Export">
+              <nx-icon name="arrow-upload"></nx-icon>
+            </button>
+            <button nxIconButton="tertiary small" type="button" title="Undo">
+              <nx-icon name="undo"></nx-icon>
+            </button>
+          </div>
+          <button *ngIf="!sublimitsLocked" nxButton="secondary small" type="button" (click)="addLocationRules()">
+            Add location rules
+          </button>
+          <button *ngIf="!sublimitsLocked" nxButton="primary small" type="button" (click)="addCoverages()">
+            Add coverages
+          </button>
+        </div>
+      </div>
+
+      <div class="grid-wrapper">
+        <ag-grid-angular
+          class="grid-area"
+          [theme]="theme"
+          [rowData]="rowData"
+          [columnDefs]="colDefs"
+          [defaultColDef]="defaultColDef"
+          [rowSelection]="rowSelection"
+          [getRowClass]="getRowClass"
+          [getRowId]="getRowId"
+          [enableCellSpan]="true"
+          [domLayout]="'autoHeight'"
+          [singleClickEdit]="true"
+          (rowClicked)="onRowClicked($event)"
+          (cellClicked)="onCellClicked($event)"
+          (cellValueChanged)="onCellValueChanged($event)"
+          (gridReady)="onGridReady($event)"
+          (filterChanged)="onFilterChanged()"
+          (cellContextMenu)="onGridCellContextMenu($event, 'coverages')"
+          (contextmenu)="$event.preventDefault()"
+        />
+
+        <!-- Custom column panel -->
+        <div class="col-panel">
+          <div class="col-panel-body" *ngIf="panelOpen">
+            <div class="cp-search-wrap">
+              <span class="cp-search-icon">&#128269;</span>
+              <input class="cp-search" type="text" placeholder="Search..." [(ngModel)]="colSearch" />
+            </div>
+            <div class="cp-row cp-select-all">
+              <nx-checkbox
+                [checked]="allChecked"
+                [indeterminate]="someChecked"
+                (checkedChange)="toggleAll($event)">Select All</nx-checkbox>
+            </div>
+            <ng-container *ngFor="let group of filteredPanelGroups">
+              <div class="cp-row cp-group-row" (click)="group.expanded = !group.expanded">
+                <nx-icon class="cp-chevron" [name]="group.expanded ? 'chevron-down' : 'chevron-right'"></nx-icon>
+                <nx-checkbox
+                  [checked]="isGroupAllChecked(group)"
+                  [indeterminate]="isGroupSomeChecked(group)"
+                  (checkedChange)="toggleGroupCols(group, $event)"
+                  (click)="$event.stopPropagation()">{{ group.label }}</nx-checkbox>
+              </div>
+              <ng-container *ngIf="group.expanded">
+                <div *ngFor="let col of group.cols" class="cp-row cp-col-row">
+                  <span class="cp-drag">&#8942;&#8942;</span>
+                  <nx-checkbox
+                    [checked]="col.visible"
+                    (checkedChange)="toggleCol(col, $event)">{{ col.label }}</nx-checkbox>
+                </div>
+              </ng-container>
+            </ng-container>
+          </div>
+          <div class="col-panel-tab" (click)="panelOpen = !panelOpen" [class.active]="panelOpen">
+            <nx-icon name="columns" class="cp-tab-icon"></nx-icon>
+            <span class="cp-tab-text">Columns</span>
+          </div>
+        </div>
+      </div>
+
+      </ng-container><!-- /sublimits -->
+
+      <!-- ── Transit Sublimits/Deductibles tab (Marine Cargo) ──── -->
+      <ng-container *ngIf="activeTab === 'sublimits' && selectedLob === 'Marine Cargo'">
+
+      <div class="page-toolbar">
+        <div class="toolbar-left"></div>
+        <div class="toolbar-right">
+          <button class="clear-filters-btn" (click)="clearAllTransitFilters()">
+            Clear all filters
+          </button>
+          <button nxButton="secondary small" type="button" (click)="addTransitLocation()">
+            Add Segment Breakdowns
+          </button>
+          <button nxButton="primary small" type="button" (click)="addTransitComponent()">
+            Add Segments
+          </button>
+        </div>
+      </div>
+
+      <div class="grid-wrapper">
+        <ag-grid-angular
+          class="grid-area"
+          [theme]="theme"
+          [rowData]="transitRowData"
+          [columnDefs]="transitColDefs"
+          [defaultColDef]="defaultTransitColDef"
+          [rowSelection]="rowSelection"
+          [suppressRowClickSelection]="true"
+          [getRowClass]="getTransitRowClass"
+          [getRowId]="getTransitRowId"
+          [domLayout]="'autoHeight'"
+          [singleClickEdit]="true"
+          (cellClicked)="onTransitCellClicked($event)"
+          (gridReady)="onTransitGridReady($event)"
+          (contextmenu)="$event.preventDefault()"
+        />
+      </div>
+
+      </ng-container><!-- /transit -->
+
+    </div><!-- /page-main -->
+
+    <!-- ── Error side panel ───────────────────────────────────── -->
+    <div class="error-panel" *ngIf="errorPanelOpen">
+      <!-- Tab strip -->
+      <div class="ep-tab-strip">
+        <button class="ep-tab" type="button"
+          [class.active]="errorPanelTab === 'errors'"
+          (click)="errorPanelTab = 'errors'"
+          title="Error log">
+          <nx-icon name="exclamation-triangle" class="ep-tab-icon"></nx-icon>
+        </button>
+        <button class="ep-tab" type="button"
+          [class.active]="errorPanelTab === 'attachments'"
+          (click)="errorPanelTab = 'attachments'"
+          title="Attachments">
+          <nx-icon name="paperclip" class="ep-tab-icon"></nx-icon>
+        </button>
+        <button class="ep-tab" type="button"
+          [class.active]="errorPanelTab === 'comments'"
+          (click)="errorPanelTab = 'comments'"
+          title="Comments">
+          <nx-icon name="chat-o" class="ep-tab-icon"></nx-icon>
+        </button>
+      </div>
+
+      <!-- Panel body -->
+      <div class="ep-body">
+        <ng-container *ngIf="errorPanelTab === 'errors'">
+          <div class="ep-header">
+            <h3 class="ep-title">Error log<span class="ep-dot" *ngIf="saveAttempted && pageErrors.length > 0"></span></h3>
+          </div>
+
+          <ng-container *ngIf="pageErrors.length === 0; else hasErrors">
+            <p class="ep-section-title">Nothing to report</p>
+            <p class="ep-empty-desc">In case of any detected errors they will be displayed here.</p>
+          </ng-container>
+
+          <ng-template #hasErrors>
+            <p class="ep-section-title">Unsolved errors</p>
+
+            <div *ngFor="let err of pageErrors" class="ep-error-item">
+              <div class="ep-error-header">
+                <nx-icon name="exclamation-triangle" class="ep-warn-icon"></nx-icon>
+                <span class="ep-error-label">{{ err.label }}</span>
+              </div>
+              <p class="ep-error-msg">{{ err.message }}</p>
+              <button class="ep-goto-link" type="button" (click)="goToIssue(err.rowId, err.field)">Go to issue</button>
+            </div>
+
+          </ng-template>
+        </ng-container>
+
+        <ng-container *ngIf="errorPanelTab === 'attachments'">
+          <div class="ep-header">
+            <h3 class="ep-title">Attachments</h3>
+          </div>
+          <p class="ep-empty-desc">No attachments added.</p>
+        </ng-container>
+
+        <ng-container *ngIf="errorPanelTab === 'comments'">
+          <div class="ep-header">
+            <h3 class="ep-title">Comments</h3>
+          </div>
+
+          <ng-container *ngIf="comments.length === 0">
+            <p class="ep-empty-desc">No comment yet</p>
+          </ng-container>
+
+          <div class="comment-list">
+            <div *ngFor="let c of comments" class="comment-item" [class.comment-item--highlighted]="c.id === highlightedCommentId" (click)="goToComment(c)">
+              <div class="comment-avatar">
+                <span *ngIf="c.pinNumber == null">{{ c.avatarInitials }}</span>
+                <span *ngIf="c.pinNumber != null" class="comment-pin-badge">{{ c.pinNumber }}</span>
+              </div>
+              <div class="comment-content">
+                <div class="comment-meta">
+                  <span class="comment-author">{{ c.author }}</span>
+                  <span class="comment-time">{{ c.timestamp }}</span>
+                </div>
+                <p class="comment-text">{{ c.text }}</p>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+  </div><!-- /page-body -->
+
+  <!-- ── Save current view modal ──────────────────────────────── -->
+  <div class="modal-overlay" *ngIf="showSaveViewModal" (click)="cancelSaveView($event)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">Save current view</span>
+        <button class="modal-close-btn" type="button" (click)="cancelSaveView($event)">
+          <nx-icon name="close"></nx-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="modal-label">View name</label>
+        <div class="modal-input-wrap">
+          <input class="modal-input" type="text" placeholder="View name..."
+            [(ngModel)]="newViewName" [maxlength]="20"
+            (keydown.enter)="confirmSaveView($event)"
+            (keydown.Escape)="cancelSaveView($event)" autofocus />
+          <span class="modal-char-counter">{{ newViewName.length }}/20</span>
+        </div>
+        <span class="modal-validation-error" *ngIf="viewNameTouched && !newViewName.trim()">Enter view name to proceed.</span>
+      </div>
+      <div class="modal-footer">
+        <button nxButton="secondary small" type="button" (click)="cancelSaveView($event)">Cancel</button>
+        <button nxButton="primary small" type="button" (click)="confirmSaveView($event)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Manage views modal ────────────────────────────────────── -->
+  <div class="modal-overlay" *ngIf="showManageViewsModal" (click)="closeManageViews($event)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="mvh-title-group">
+          <span class="modal-title">Manage views</span>
+          <div class="mvh-info-wrap">
+            <nx-icon name="info-circle-o" class="mvh-info-icon"></nx-icon>
+            <div class="mvh-tooltip">These template are personal to your account.</div>
+          </div>
+        </div>
+        <button class="modal-close-btn" type="button" (click)="closeManageViews($event)">
+          <nx-icon name="close"></nx-icon>
+        </button>
+      </div>
+      <div class="modal-body modal-body--list">
+        <ul class="view-list">
+          <li *ngFor="let view of sortedViews" class="view-item manage-item">
+            <ng-container *ngIf="renamingViewId === view.id; else viewNameDisplay">
+              <div class="rename-wrap" (click)="$event.stopPropagation()">
+                <div class="rename-inline">
+                  <input class="rename-input" type="text" [(ngModel)]="renameValue" [maxlength]="20"
+                    (keydown.enter)="confirmRename(view, $event)"
+                    (keydown.Escape)="cancelRename($event)" autofocus />
+                  <button nxButton="primary small" type="button" (click)="confirmRename(view, $event)" title="Confirm">
+                    <nx-icon name="check"></nx-icon>
+                  </button>
+                  <button nxButton="secondary small" type="button" (click)="cancelRename($event)" title="Cancel">
+                    <nx-icon name="close"></nx-icon>
+                  </button>
+                </div>
+                <span class="rename-error" *ngIf="renameTouched && !renameValue.trim()">Enter view name to proceed.</span>
+              </div>
+            </ng-container>
+            <ng-template #viewNameDisplay>
+              <span class="view-name">{{ view.name }}</span>
+              <span *ngIf="view.isDefault" class="default-badge">Default</span>
+              <span class="type-badge type-badge--system" *ngIf="view.id === 'default'">System</span>
+              <span class="type-badge type-badge--custom" *ngIf="view.id !== 'default'">Custom</span>
+              <div class="view-menu-wrapper" *ngIf="views.length > 1" (click)="$event.stopPropagation()">
+                <button class="view-menu-btn" (click)="toggleViewMenu(view.id, $event)" title="More options"
+                  [disabled]="view.id === 'default' && view.isDefault">
+                  <nx-icon name="ellipsis-h"></nx-icon>
+                </button>
+                <div class="view-menu-dropdown" *ngIf="openMenuViewId === view.id">
+                  <button class="view-menu-item" *ngIf="view.id !== 'default'" (click)="startRename(view, $event)">Rename</button>
+                  <button class="view-menu-item" *ngIf="!view.isDefault" (click)="setAsDefault(view, $event)">Set as default</button>
+                  <div class="view-divider" *ngIf="view.id !== 'default'"></div>
+                  <button class="view-menu-item view-menu-item--danger" *ngIf="view.id !== 'default'" (click)="deleteView(view, $event)">Delete</button>
+                </div>
+              </div>
+            </ng-template>
+          </li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button nxButton="primary small" type="button" (click)="closeManageViews($event)">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Currency flyout ──────────────────────────────────────── -->
+  <div class="currency-flyout" *ngIf="currencyFlyoutOpen"
+    [style.top.px]="currencyFlyoutPos.top" [style.left.px]="currencyFlyoutPos.left"
+    (click)="$event.stopPropagation()">
+
+    <div class="cf-search-wrap">
+      <input class="cf-search" type="text" placeholder="Type to filter"
+        [(ngModel)]="currencySearch" autofocus />
+    </div>
+
+    <!-- Pinned — always visible above the scrollable list, next to the search box -->
+    <ng-container *ngIf="currencyFlyoutGrid !== 'submission' && defaultCurrencyOption && defaultMatchesCurrencySearch()">
+      <div class="cf-section-label">Submission currency</div>
+      <div class="cf-item cf-item--default cf-item--pinned"
+        [class.cf-item--checked]="defaultCurrencyOption!.code === currentCellCurrency" (click)="selectCurrency(defaultCurrencyOption!.code)">
+        <nx-icon *ngIf="defaultCurrencyOption!.code === currentCellCurrency" name="check" size="s" class="cf-checkmark"></nx-icon>
+        <span class="cf-item-code">{{ defaultCurrencyOption!.code }} - {{ defaultCurrencyOption!.name }}</span>
+      </div>
+      <div class="cf-divider" *ngIf="filteredCurrencyList.length > 0"></div>
+    </ng-container>
+
+    <div class="cf-list">
+      <div class="cf-section-label" *ngIf="currencyFlyoutGrid !== 'submission' && defaultCurrencyOption && defaultMatchesCurrencySearch() && filteredCurrencyList.length > 0">Other currency</div>
+      <!-- Full list in natural order — current cell currency stays in place, marked with a checkmark -->
+      <div *ngFor="let c of filteredCurrencyList" class="cf-item"
+        [class.cf-item--checked]="c.code === currentCellCurrency" (click)="selectCurrency(c.code)">
+        <nx-icon *ngIf="c.code === currentCellCurrency" name="check" size="s" class="cf-checkmark"></nx-icon>
+        {{ c.code }} - {{ c.name }}
+      </div>
+
+      <div class="cf-empty" *ngIf="flyoutEmpty">No results</div>
+    </div>
+  </div>
+
+  <!-- ── LOBs flyout ──────────────────────────────────────────── -->
+  <div class="currency-flyout lob-flyout" *ngIf="lobFlyoutOpen"
+    [style.top.px]="lobFlyoutPos.top" [style.left.px]="lobFlyoutPos.left"
+    (click)="$event.stopPropagation()">
+    <div class="cf-list">
+      <div *ngFor="let lob of lobOptions" class="cf-item"
+        [class.cf-item--checked]="lob === selectedLob" (click)="selectLob(lob)">
+        <nx-icon *ngIf="lob === selectedLob" name="check" size="s" class="cf-checkmark"></nx-icon>
+        <span class="cf-item-code">{{ lob }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Limits action dropdown ──────────────────────────────── -->
+  <div class="action-dropdown" *ngIf="limitsActionMenuOpen"
+    [style.top.px]="actionMenuPos.top" [style.left.px]="actionMenuPos.left">
+    <button class="action-dropdown-item" (click)="applyToTransitTab('limits')">
+      Apply to transit tab
+    </button>
+  </div>
+
+  <!-- ── Deductibles action dropdown ─────────────────────────── -->
+  <div class="action-dropdown" *ngIf="deductiblesActionMenuOpen"
+    [style.top.px]="actionMenuPos.top" [style.left.px]="actionMenuPos.left">
+    <button class="action-dropdown-item" (click)="applyToTransitTab('deductibles')">
+      Apply to transit tab
+    </button>
+  </div>
+
+  <!-- ── Coverage Sublimits action dropdown ──────────────────── -->
+  <div class="action-dropdown" *ngIf="sublimitsActionMenuOpen"
+    [style.top.px]="actionMenuPos.top" [style.left.px]="actionMenuPos.left">
+    <button class="action-dropdown-item" (click)="onSublimitsSectionAction('limits')">
+      {{ isGroupSectionSplit(sublimitsActionGroupId, 'limits') ? 'Merge' : 'Split' }} Limit
+    </button>
+    <button class="action-dropdown-item" (click)="onSublimitsSectionAction('deductibles')">
+      {{ isGroupSectionSplit(sublimitsActionGroupId, 'deductibles') ? 'Merge' : 'Split' }} Deductible
+    </button>
+  </div>
+
+  <!-- ── Right-click "Apply to all" context menu ─────────────── -->
+  <div class="action-dropdown" *ngIf="applyAllMenuOpen"
+    [style.top.px]="applyAllMenuPos.top" [style.left.px]="applyAllMenuPos.left">
+    <button class="action-dropdown-item" (click)="applyValueToAll()">
+      Apply to all
+    </button>
+  </div>
+
+  <!-- ── Merge Coverage Sublimits section modal ──────────────── -->
+  <div class="modal-overlay" *ngIf="showSublimitsMergeModal" (click)="cancelSublimitsMergeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">Merge PD &amp; BI?</span>
+        <button class="modal-close-btn" type="button" (click)="cancelSublimitsMergeModal()">
+          <nx-icon name="close"></nx-icon>
+        </button>
+      </div>
+      <div class="modal-body merge-modal-body">
+        <p class="merge-modal-desc">
+          PD &amp; BI {{ pendingSublimitsMergeSectionLabel }} data will not be retained for the merged fields. Are you sure you want to continue?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button nxButton="secondary small" type="button" (click)="cancelSublimitsMergeModal()">Cancel</button>
+        <button nxButton="primary small" type="button" (click)="confirmSublimitsMerge()">Merge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Merge Limits modal ───────────────────────────────────── -->
+  <div class="modal-overlay" *ngIf="showMergeLimitsModal" (click)="cancelMergeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">{{ limitsMerged ? 'Split' : 'Merge' }} PD &amp; BI?</span>
+        <button class="modal-close-btn" type="button" (click)="cancelMergeModal()">
+          <nx-icon name="close"></nx-icon>
+        </button>
+      </div>
+      <div class="modal-body merge-modal-body">
+        <p class="merge-modal-desc" *ngIf="!limitsMerged">
+          Merging PD and BI will combine them into a single PD &amp; BI row for Overall Limits.
+        </p>
+        <p class="merge-modal-desc" *ngIf="limitsMerged">
+          Splitting will restore PD and BI as separate rows for Overall Limits.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button nxButton="secondary small" type="button" (click)="cancelMergeModal()">Cancel</button>
+        <button nxButton="primary small" type="button"
+          (click)="limitsMerged ? confirmSplitLimits() : confirmMergeLimits()">
+          {{ limitsMerged ? 'Split' : 'Merge' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Merge Deductibles modal ──────────────────────────────── -->
+  <div class="modal-overlay" *ngIf="showMergeDeductiblesModal" (click)="cancelMergeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">{{ deductiblesMerged ? 'Split' : 'Merge' }} PD &amp; BI?</span>
+        <button class="modal-close-btn" type="button" (click)="cancelMergeModal()">
+          <nx-icon name="close"></nx-icon>
+        </button>
+      </div>
+      <div class="modal-body merge-modal-body">
+        <p class="merge-modal-desc" *ngIf="!deductiblesMerged">
+          Merging PD and BI will combine them into a single PD &amp; BI row for Overall Deductibles.
+        </p>
+        <p class="merge-modal-desc" *ngIf="deductiblesMerged">
+          Splitting will restore PD and BI as separate rows for Overall Deductibles.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button nxButton="secondary small" type="button" (click)="cancelMergeModal()">Cancel</button>
+        <button nxButton="primary small" type="button"
+          (click)="deductiblesMerged ? confirmSplitDeductibles() : confirmMergeDeductibles()">
+          {{ deductiblesMerged ? 'Split' : 'Merge' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Apply to Transit tab modal ───────────────────────────── -->
+  <div class="modal-overlay" *ngIf="applyTransitModalOpen" (click)="closeApplyTransitModal()">
+    <div class="modal-box apply-transit-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close-btn apply-transit-close-btn" type="button" (click)="closeApplyTransitModal()">
+        <nx-icon name="close"></nx-icon>
+      </button>
+      <div class="apply-transit-header">
+        <span class="apply-transit-warn-icon">!</span>
+        <span class="apply-transit-title">Apply to Transit tab</span>
+      </div>
+      <div class="modal-body apply-transit-body">
+        <p class="apply-transit-desc">
+          Applying will overwrite the existing Transit {{ applyTransitModalType === 'limits' ? 'limit' : 'deductible' }} values.
+        </p>
+        <p class="apply-transit-desc">
+          The following values from Overall {{ applyTransitModalType === 'limits' ? 'Limits' : 'Deductibles' }} will be copied to the selected fields in the Transit Sublimits/Deductibles tab:
+        </p>
+        <ul class="apply-transit-list">
+          <li *ngFor="let f of applyTransitFields">{{ f.label }}: <strong>{{ f.value }}</strong></li>
+        </ul>
+      </div>
+      <div class="modal-footer apply-transit-footer">
+        <button nxButton="secondary small" type="button" (click)="closeApplyTransitModal()">Cancel</button>
+        <button nxButton="secondary small" type="button" (click)="applyToTransitOnlyEmpty()">Apply to only empty cells</button>
+        <button nxButton="primary small" type="button" (click)="applyToTransitOverwriteAll()">Overwrite all</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Success toast ────────────────────────────────────────── -->
+  <div class="merge-toast" *ngIf="mergeToastVisible">
+    <div class="merge-toast-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" fill="#2e7d32"/>
+        <path d="M6.5 12.5l3.5 3.5 7.5-7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="merge-toast-text">
+      <span class="merge-toast-title">{{ mergeToastMessage }}</span>
+      <span class="merge-toast-sub">{{ mergeToastSubMessage }}</span>
+    </div>
+  </div>
+
+</div>

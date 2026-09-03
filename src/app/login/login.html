@@ -1,0 +1,74 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="login-logo">
+      <img src="favicon.svg" alt="Allianz Logo" width="48" height="48" />
+    </div>
+
+    <h2 nxHeadline="subsection-large" class="login-title">Welcome back</h2>
+    <p class="login-subtitle">Sign in to your account</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+
+      <!-- Email -->
+      <nx-formfield label="Email address">
+        <input
+          nxInput
+          type="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          @if (loginForm.get('email')?.errors?.['required']) {
+            <span nxFormfieldError>Email is required.</span>
+          } @else if (loginForm.get('email')?.errors?.['email']) {
+            <span nxFormfieldError>Please enter a valid email address.</span>
+          }
+        }
+      </nx-formfield>
+
+      <!-- Password -->
+      <nx-formfield label="Password">
+        <input
+          nxInput
+          [type]="hidePassword ? 'password' : 'text'"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+        <nx-icon
+          nxFormfieldSuffix
+          [name]="hidePassword ? 'password-hide-o' : 'password-show-o'"
+          (click)="togglePasswordVisibility()"
+          style="cursor: pointer"
+          aria-label="Toggle password visibility"
+        ></nx-icon>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          @if (loginForm.get('password')?.errors?.['required']) {
+            <span nxFormfieldError>Password is required.</span>
+          } @else if (loginForm.get('password')?.errors?.['minlength']) {
+            <span nxFormfieldError>Password must be at least 6 characters.</span>
+          }
+        }
+      </nx-formfield>
+
+      <!-- Remember me + Forgot password -->
+      <div class="login-options">
+        <nx-checkbox formControlName="rememberMe">Remember me</nx-checkbox>
+        <nx-link><a href="#">Forgot password?</a></nx-link>
+      </div>
+
+      <!-- Submit -->
+      <button nxButton="primary" type="submit" class="login-btn">
+        Sign in
+      </button>
+
+    </form>
+
+    <p class="login-register">
+      Don't have an account?
+      <nx-link><a href="#">Create account</a></nx-link>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,270 @@
+.coverage-page {
+  padding: 12px 16px;
+  font-family: 'Allianz Neo', sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+// ── Top toolbar ──────────────────────────────────────────────
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.toolbar-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+
+.clear-filters-link {
+  background: none;
+  border: none;
+  color: #007ab3;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+
+  &:hover { text-decoration: underline; }
+  &:disabled { color: #b0b0b0; cursor: default; text-decoration: none; }
+}
+
+// ── View dropdown ────────────────────────────────────────────
+.view-dropdown-wrapper {
+  position: relative;
+}
+
+.view-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1a1a1a;
+  padding: 0;
+  white-space: nowrap;
+
+  .view-label-text { color: #666; }
+  .view-active-name { font-weight: 500; }
+  .view-arrow { font-size: 9px; color: #007ab3; }
+}
+
+.view-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  min-width: 240px;
+  padding: 8px 0;
+}
+
+.view-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 4px;
+}
+
+.manage-close-btn {
+  background: none;
+  border: none;
+  color: #007ab3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.view-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.view-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1a1a1a;
+  gap: 8px;
+
+  &:hover { background: #f5fafe; }
+  &.active { background: #e8f4fb; font-weight: 500; }
+  &.manage-item { cursor: default; &:hover { background: none; } }
+  .view-name { flex: 1; }
+}
+
+.default-badge {
+  background: #007ab3;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.delete-view-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+  &:hover { color: #d0021b; }
+}
+
+.view-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 4px 0;
+}
+
+.view-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #007ab3;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 500;
+  &:hover { background: #f5fafe; }
+  .action-icon { font-size: 14px; width: 14px; text-align: center; }
+}
+
+.save-view-form {
+  padding: 8px 16px;
+
+  .save-view-input {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    &:focus { border-color: #007ab3; }
+  }
+
+  .save-view-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .save-confirm-btn {
+    background: #007ab3;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    &:disabled { opacity: 0.4; cursor: default; }
+    &:not(:disabled):hover { background: #005f8e; }
+  }
+
+  .save-cancel-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #555;
+    &:hover { background: #f5f5f5; }
+  }
+}
+
+// ── AG Grid cell styles ──────────────────────────────────────
+:host ::ng-deep {
+  .select-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .cell-chevron {
+    font-size: 10px;
+    color: #555;
+  }
+
+  .cell-empty {
+    color: #999;
+  }
+
+  .error-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #999;
+  }
+
+  .error-flag {
+    color: #d0021b;
+    font-size: 10px;
+    cursor: help;
+  }
+
+  // Column group headers
+  .ag-header-group-cell {
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  // Pinned column separator
+  .ag-pinned-left-cols-container {
+    border-right: 2px solid #d0d0d0;
+  }
+
+  // Sidebar columns panel
+  .ag-column-panel {
+    font-size: 12px;
+  }
+
+  .ag-column-tool-panel-column-label {
+    font-size: 12px;
+  }
+}

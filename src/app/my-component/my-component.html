@@ -1,0 +1,119 @@
+<div class="coverage-page">
+
+  <!-- ── Top toolbar ──────────────────────────────────────────── -->
+  <div class="page-toolbar">
+    <div class="toolbar-left">
+      <!-- View dropdown -->
+      <div class="view-dropdown-wrapper">
+        <button class="view-trigger" (click)="toggleViewDropdown($event)">
+          <span class="view-label-text">View:</span>
+          <span class="view-active-name">{{ activeView?.name ?? '—' }}</span>
+          <span class="view-arrow">{{ viewDropdownOpen ? '&#x25B2;' : '&#x25BC;' }}</span>
+        </button>
+
+        <div class="view-dropdown" *ngIf="viewDropdownOpen" (click)="$event.stopPropagation()">
+          <ng-container *ngIf="manageMode; else normalMode">
+            <div class="view-dropdown-header">
+              <span>Manage views</span>
+              <button class="manage-close-btn" (click)="closeManageViews($event)">Done</button>
+            </div>
+            <ul class="view-list">
+              <li *ngFor="let view of views" class="view-item manage-item">
+                <span class="view-name">{{ view.name }}</span>
+                <span *ngIf="view.isDefault" class="default-badge">DEFAULT</span>
+                <button *ngIf="!view.isDefault" class="delete-view-btn" (click)="deleteView(view, $event)">&#x2715;</button>
+              </li>
+            </ul>
+          </ng-container>
+
+          <ng-template #normalMode>
+            <ul class="view-list">
+              <li
+                *ngFor="let view of views"
+                class="view-item"
+                [class.active]="view.id === activeViewId"
+                (click)="applyView(view, $event)"
+              >
+                <span class="view-name">{{ view.name }}</span>
+                <span *ngIf="view.isDefault" class="default-badge">&#9733; DEFAULT</span>
+              </li>
+            </ul>
+            <div class="view-divider"></div>
+            <div *ngIf="saveViewMode; else saveAction" class="save-view-form" (click)="$event.stopPropagation()">
+              <input
+                class="save-view-input"
+                type="text"
+                placeholder="View name..."
+                [(ngModel)]="newViewName"
+                (keydown.enter)="confirmSaveView($event)"
+                (keydown.Escape)="cancelSaveView($event)"
+                autofocus
+              />
+              <div class="save-view-actions">
+                <button class="save-confirm-btn" (click)="confirmSaveView($event)" [disabled]="!newViewName.trim()">Save</button>
+                <button class="save-cancel-btn" (click)="cancelSaveView($event)">Cancel</button>
+              </div>
+            </div>
+            <ng-template #saveAction>
+              <button class="view-action-btn" (click)="openSaveView($event)">
+                <span class="action-icon">+</span> Save current view
+              </button>
+            </ng-template>
+            <button class="view-action-btn" (click)="openManageViews($event)">
+              <span class="action-icon">&#9881;</span> Manage views
+            </button>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <button
+        class="clear-filters-link"
+        (click)="clearAllFilters()"
+        [disabled]="activeFilterCount === 0"
+      >
+        Clear all filters
+      </button>
+
+      <div class="toolbar-icon-group">
+        <button nxIconButton="tertiary small" type="button" title="Delete">
+          <nx-icon name="trash-o"></nx-icon>
+        </button>
+        <button nxIconButton="tertiary small" type="button" title="Export">
+          <nx-icon name="arrow-upload"></nx-icon>
+        </button>
+        <button nxIconButton="tertiary small" type="button" title="Undo">
+          <nx-icon name="undo"></nx-icon>
+        </button>
+      </div>
+
+      <button nxButton="secondary small" type="button" (click)="addLocationRules()">
+        Add location rules
+      </button>
+      <button nxButton="primary small" type="button" (click)="addCoverages()">
+        Add coverages
+      </button>
+    </div>
+  </div>
+
+  <!-- ── AG Grid ──────────────────────────────────────────────── -->
+  <ag-grid-angular
+    style="width: 100%; height: calc(100vh - 100px);"
+    [theme]="theme"
+    [rowData]="rowData"
+    [columnDefs]="colDefs"
+    [defaultColDef]="defaultColDef"
+    [autoGroupColumnDef]="autoGroupColumnDef"
+    [treeData]="treeData"
+    [getDataPath]="getDataPath"
+    [groupDefaultExpanded]="groupDefaultExpanded"
+    [sideBar]="sideBar"
+    [rowSelection]="rowSelection"
+    [selectionColumnDef]="selectionColumnDef"
+    [pagination]="pagination"
+    [paginationPageSize]="paginationPageSize"
+    [paginationPageSizeSelector]="paginationPageSizeSelector"
+    (gridReady)="onGridReady($event)"
+  />
+</div>
