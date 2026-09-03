@@ -15,10 +15,9 @@ export interface PageComment {
   resolved?: boolean;
 }
 
-// Points at the local mock server in server/ by default — point these at your
-// real backend whenever it's ready, the rest of the app doesn't need to change.
-const API_URL = 'http://localhost:4310/api/comments';
-const WS_URL = 'ws://localhost:4310';
+// Live backend deployed on Render (server/index.js) — see server/render.yaml.
+const API_URL = 'https://coverages-comments-server.onrender.com/api/comments';
+const WS_URL = 'wss://coverages-comments-server.onrender.com';
 
 export type CommentEvent =
   | { type: 'added'; comment: PageComment }
