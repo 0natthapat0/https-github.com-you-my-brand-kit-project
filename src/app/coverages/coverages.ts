@@ -112,9 +112,9 @@ const empty: Partial<CoverageRow> = {
 const child = (id: string, parentId: string, locationRules: string, priority: number, extra: Partial<CoverageRow> = {}): CoverageRow => ({
   id, parentId, coveragesPerils: '', locationRules, priority,
   currency: 'EUR',
-  limSection: 'PD & BI', limType: 'Amount', limValue: 12546, limOccurrence: 'Per Occurrence', limAggValue: 12546, biIp: 12, biIpUnit: 'Months',
+  limSection: 'PD & BI', limType: 'Amount', limValue: 12546, limOccurrence: 'Per Loss', limAggValue: 12546, biIp: 12, biIpUnit: 'Months',
   dedSection: 'PD & BI', retentionType: 'Standard Deductible', deductibleType: 'Standard Deductible',
-  dedLimitType: 'Amount', dedLimitValue: 18000, dedMin: null, dedMax: null, dedOccurrence: 'Per Occurrence', dedAggValue: null,
+  dedLimitType: 'Amount', dedLimitValue: 18000, dedMin: null, dedMax: null, dedOccurrence: 'Per Loss', dedAggValue: null,
   errorFields: [],
   ...extra,
 });
@@ -144,13 +144,13 @@ const OVERALL_LIMITS_DATA: OverallLimitRow[] = [
   {
     id: 'lim-pd', section: 'PD', currency: 'EUR',
     sumInsured: 100113000, limType: 'Sum Insured', limValue: 100113000,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: null, biIpUnit: '', biInterest: '',
   },
   {
     id: 'lim-bi', section: 'BI', currency: 'EUR',
     sumInsured: 50005000, limType: 'Sum Insured', limValue: 50005000,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: 12, biIpUnit: 'Months', biInterest: 'Gross Profit',
   },
 ];
@@ -160,13 +160,13 @@ const OVERALL_DEDUCTIBLES_DATA: OverallDeductibleRow[] = [
     id: 'ded-pd', section: 'PD', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: 10000000, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
   {
     id: 'ded-bi', section: 'BI', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: 10000000, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
 ];
 
@@ -177,31 +177,31 @@ const MARINE_CARGO_LIMITS_DATA: OverallLimitRow[] = [
   {
     id: 'lim-transit', section: 'Transit', currency: 'EUR',
     sumInsured: 4_004_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: null, biIpUnit: '', biInterest: '',
   },
   {
     id: 'lim-storage-noncat', section: 'Storage (Non-CAT)', currency: 'EUR',
     sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: null, biIpUnit: '', biInterest: '',
   },
   {
     id: 'lim-storage-cat', section: 'Storage CAT', currency: 'EUR',
     sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: null, biIpUnit: '', biInterest: '',
   },
   {
     id: 'lim-dsu', section: 'Delay in Startup (DSU)', currency: 'EUR',
     sumInsured: null, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: 12, biIpUnit: 'Months', biInterest: 'Gross Profit',
   },
   {
     id: 'lim-war', section: 'War', currency: 'EUR',
     sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Occurrence', limAggValue: null,
+    limOccurrence: 'Per Loss', limAggValue: null,
     biIp: null, biIpUnit: '', biInterest: '',
   },
 ];
@@ -211,31 +211,31 @@ const MARINE_CARGO_DEDUCTIBLES_DATA: OverallDeductibleRow[] = [
     id: 'ded-transit', section: 'Transit', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
   {
     id: 'ded-storage-noncat', section: 'Storage (Non-CAT)', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
   {
     id: 'ded-storage-cat', section: 'Storage CAT', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
   {
     id: 'ded-dsu', section: 'Delay in Startup (DSU)', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
   {
     id: 'ded-war', section: 'War', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Occurrence', dedAggValue: null,
+    dedOccurrence: 'Per Loss', dedAggValue: null,
   },
 ];
 
@@ -315,8 +315,8 @@ const parseShorthand = (val: any): number | null => {
 const SECTION_VALUES = ['PD', 'BI', 'PD & BI'];
 const OVERALL_LIMIT_TYPE_VALUES = ['Amount', 'Sum Insured'];
 const BI_INTEREST_VALUES = ['Gross Profit', 'Revenue', 'Rental Income', 'Other'];
-const OCCURRENCE_VALUES = ['Per Occurrence', 'Per Risk', 'Per Event'];
-const LIMIT_TYPE_VALUES = ['Amount', 'Percentage'];
+const OCCURRENCE_VALUES = ['Per Loss', 'Per Occurrence', 'Per Risk', 'Per Event'];
+const LIMIT_TYPE_VALUES = ['Amount'];
 // Exchange rates relative to EUR (units of currency per 1 EUR)
 const EXCHANGE_RATES_TO_EUR: Record<string, number> = {
   EUR: 1,
@@ -429,9 +429,9 @@ const transitGroup = (id: string, segment: string, condition: string, totalSendi
 const transitChild = (id: string, parentId: string, segmentBreakdown: string, totalSendings: number | null, extra: Partial<TransitRow> = {}): TransitRow => ({
   id, parentId, segment: '', segmentBreakdown, condition: '',
   currency: 'EUR', totalSendings,
-  limType: 'Amount', limValue: null, limOccurrence: 'Per Occurrence', limAggValue: null,
+  limType: 'Amount', limValue: null, limOccurrence: 'Per Loss', limAggValue: null,
   retentionType: 'Standard Deductible', dedLimitType: 'Amount', dedLimitValue: null,
-  dedMin: null, dedMax: null, dedOccurrence: 'Per Occurrence', dedAggValue: null,
+  dedMin: null, dedMax: null, dedOccurrence: 'Per Loss', dedAggValue: null,
   ...extra,
 });
 
@@ -464,11 +464,20 @@ export class CoveragesComponent implements OnInit {
     this.commentsService.list().subscribe(comments => {
       this.comments = comments;
       this.nextPinNumber = Math.max(0, ...comments.map(c => c.pinNumber ?? 0)) + 1;
+      this.cdr.detectChanges();
     });
-    this.commentsService.onCommentAdded().subscribe(comment => {
-      if (this.comments.some(c => c.id === comment.id)) return;
-      this.comments.push(comment);
-      this.nextPinNumber = Math.max(this.nextPinNumber, (comment.pinNumber ?? 0) + 1);
+    this.commentsService.onCommentEvent().subscribe(event => {
+      if (event.type === 'added') {
+        if (this.comments.some(c => c.id === event.comment.id)) return;
+        this.comments.push(event.comment);
+        this.nextPinNumber = Math.max(this.nextPinNumber, (event.comment.pinNumber ?? 0) + 1);
+      } else if (event.type === 'updated') {
+        const idx = this.comments.findIndex(c => c.id === event.comment.id);
+        if (idx !== -1) this.comments[idx] = event.comment;
+      } else if (event.type === 'deleted') {
+        this.comments = this.comments.filter(c => c.id !== event.id);
+        if (this.highlightedCommentId === event.id) this.highlightedCommentId = null;
+      }
       this.cdr.detectChanges();
     });
   }
@@ -478,6 +487,10 @@ export class CoveragesComponent implements OnInit {
   private deductiblesGridApi!: GridApi;
   limitsGridWidth = 'auto';
   deductiblesGridWidth = 'auto';
+  // Select-editor dropdowns (and other ag-Grid popups) render into this element instead of
+  // the grid's own DOM — otherwise ancestors with `overflow: hidden` (e.g. .grid-wrapper)
+  // clip them, which was silently hiding extra options in narrow columns like "Limit type".
+  popupParent: HTMLElement = document.body;
 
   // Two fully independent copies of the whole page's editable state. Switching versions
   // saves the live fields below into the outgoing version's slot, then restores the
@@ -681,6 +694,39 @@ export class CoveragesComponent implements OnInit {
   pendingComment: { x: number; y: number } | null = null;
   newPinCommentText = '';
   highlightedCommentId: string | null = null;
+  editingCommentId: string | null = null;
+  editingText = '';
+  openPinCommentId: string | null = null;
+
+  get selectedPinComment(): PageComment | null {
+    return this.comments.find(c => c.id === this.openPinCommentId) ?? null;
+  }
+
+  get selectedPinPopoverStyle(): { [key: string]: string } {
+    const c = this.selectedPinComment;
+    if (!c || c.x == null || c.y == null) return {};
+    const pageMain = this.el.nativeElement.querySelector('.page-main') as HTMLElement | null;
+    const popoverWidth = 260;
+    let left = c.x + 28;
+    if (pageMain && left + popoverWidth > pageMain.scrollWidth) {
+      left = Math.max(0, c.x - popoverWidth - 12);
+    }
+    return { left: left + 'px', top: c.y + 'px' };
+  }
+
+  closePinPopover(event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.openPinCommentId = null;
+    this.editingCommentId = null;
+  }
+
+  get activeComments(): PageComment[] {
+    return this.comments.filter(c => !c.resolved);
+  }
+
+  get resolvedComments(): PageComment[] {
+    return this.comments.filter(c => c.resolved);
+  }
 
   openCommentsPanel(): void {
     this.errorPanelOpen = true;
@@ -752,6 +798,7 @@ export class CoveragesComponent implements OnInit {
     }).subscribe(created => {
       if (this.comments.some(c => c.id === created.id)) return;
       this.comments.push(created);
+      this.cdr.detectChanges();
     });
     this.pendingComment = null;
     this.newPinCommentText = '';
@@ -761,6 +808,8 @@ export class CoveragesComponent implements OnInit {
   onPinClick(comment: PageComment, event: MouseEvent): void {
     event.stopPropagation();
     this.highlightedCommentId = comment.id;
+    this.openPinCommentId = this.openPinCommentId === comment.id ? null : comment.id;
+    if (this.openPinCommentId !== comment.id) this.editingCommentId = null;
     this.openCommentsPanel();
   }
 
@@ -773,6 +822,51 @@ export class CoveragesComponent implements OnInit {
     setTimeout(() => {
       document.querySelector(`.comment-pin[data-comment-id="${comment.id}"]`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    });
+  }
+
+  startEdit(comment: PageComment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.editingCommentId = comment.id;
+    this.editingText = comment.text;
+  }
+
+  cancelEdit(event: MouseEvent): void {
+    event.stopPropagation();
+    this.editingCommentId = null;
+    this.editingText = '';
+  }
+
+  saveEdit(comment: PageComment, event: MouseEvent): void {
+    event.stopPropagation();
+    const text = this.editingText.trim();
+    if (!text) return;
+    this.commentsService.update(comment.id, { text }).subscribe(updated => {
+      const idx = this.comments.findIndex(c => c.id === updated.id);
+      if (idx !== -1) this.comments[idx] = updated;
+      this.cdr.detectChanges();
+    });
+    this.editingCommentId = null;
+    this.editingText = '';
+  }
+
+  // Toggles resolved state — used for both closing an open comment and reopening a resolved one.
+  closeComment(comment: PageComment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.commentsService.update(comment.id, { resolved: !comment.resolved }).subscribe(updated => {
+      const idx = this.comments.findIndex(c => c.id === updated.id);
+      if (idx !== -1) this.comments[idx] = updated;
+      this.cdr.detectChanges();
+    });
+  }
+
+  deleteComment(comment: PageComment, event: MouseEvent): void {
+    event.stopPropagation();
+    this.commentsService.delete(comment.id).subscribe(() => {
+      this.comments = this.comments.filter(c => c.id !== comment.id);
+      if (this.highlightedCommentId === comment.id) this.highlightedCommentId = null;
+      if (this.editingCommentId === comment.id) this.editingCommentId = null;
+      this.cdr.detectChanges();
     });
   }
 
@@ -884,6 +978,10 @@ export class CoveragesComponent implements OnInit {
     }
     if (!target.closest('.view-menu-wrapper')) {
       this.openMenuViewId = null;
+    }
+    if (!target.closest('.comment-pin-popover') && !target.closest('.comment-pin')) {
+      this.openPinCommentId = null;
+      this.editingCommentId = null;
     }
     if (this.skipNextDocumentClose) {
       this.skipNextDocumentClose = false;
@@ -2223,6 +2321,12 @@ export class CoveragesComponent implements OnInit {
     if (event.newValue === 'Amount') {
       this.limitsRowData = this.limitsRowData.map(row =>
         row.id === event.data.id ? { ...row, limValue: null } : row
+      );
+    } else if (event.newValue === 'Sum Insured') {
+      // Limit value inherits Sum Insured so downstream consumers of the data (exports,
+      // submission) see the actual inherited number, not just a display-only renderer.
+      this.limitsRowData = this.limitsRowData.map(row =>
+        row.id === event.data.id ? { ...row, limValue: row.sumInsured } : row
       );
     }
     setTimeout(() => {

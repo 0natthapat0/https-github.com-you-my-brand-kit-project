@@ -12,6 +12,7 @@ export interface PageComment {
   y?: number;
   pinNumber?: number;
   tab?: string;
+  resolved?: boolean;
 }
 
 // Points at the local mock server in server/ by default — point these at your
@@ -19,10 +20,15 @@ export interface PageComment {
 const API_URL = 'http://localhost:4310/api/comments';
 const WS_URL = 'ws://localhost:4310';
 
+export type CommentEvent =
+  | { type: 'added'; comment: PageComment }
+  | { type: 'updated'; comment: PageComment }
+  | { type: 'deleted'; id: string };
+
 @Injectable({ providedIn: 'root' })
 export class CommentsService {
   private socket: WebSocket | null = null;
-  private incoming$ = new Subject<PageComment>();
+  private events$ = new Subject<CommentEvent>();
 
   constructor(private http: HttpClient) {}
 
@@ -34,10 +40,18 @@ export class CommentsService {
     return this.http.post<PageComment>(API_URL, comment);
   }
 
-  // Emits every comment created by *any* connected client (including this one).
-  onCommentAdded(): Observable<PageComment> {
+  update(id: string, changes: Partial<PageComment>): Observable<PageComment> {
+    return this.http.patch<PageComment>(`${API_URL}/${id}`, changes);
+  }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/${id}`);
+  }
+
+  // Emits every add/update/delete made by *any* connected client (including this one).
+  onCommentEvent(): Observable<CommentEvent> {
     this.connect();
-    return this.incoming$.asObservable();
+    return this.events$.asObservable();
   }
 
   private connect(): void {
@@ -47,7 +61,11 @@ export class CommentsService {
       try {
         const msg = JSON.parse(event.data);
         if (msg?.type === 'comment:new' && msg.comment) {
-          this.incoming$.next(msg.comment as PageComment);
+          this.events$.next({ type: 'added', comment: msg.comment as PageComment });
+        } else if (msg?.type === 'comment:update' && msg.comment) {
+          this.events$.next({ type: 'updated', comment: msg.comment as PageComment });
+        } else if (msg?.type === 'comment:delete' && msg.id) {
+          this.events$.next({ type: 'deleted', id: msg.id as string });
         }
       } catch {
         // ignore malformed messages

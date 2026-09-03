@@ -65,7 +65,7 @@
 
       <!-- ── Comment pins (placed) ────────────────────────────────── -->
       <div class="comment-pin"
-        *ngFor="let c of comments"
+        *ngFor="let c of activeComments"
         [attr.data-comment-id]="c.id"
         [class.comment-pin--hidden]="c.x == null || c.y == null || (c.tab && c.tab !== activeTab)"
         [style.left.px]="c.x"
@@ -91,6 +91,38 @@
           <div class="comment-pin-popover-actions">
             <button nxButton="secondary small" type="button" (click)="cancelPendingComment()">Cancel</button>
             <button nxButton="primary small" type="button" [disabled]="!newPinCommentText.trim()" (click)="submitPendingComment()">Comment</button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ── Existing comment popover (view/edit/close/delete) ───────── -->
+      <ng-container *ngIf="selectedPinComment as sc">
+        <div class="comment-pin-popover" [ngStyle]="selectedPinPopoverStyle" (click)="$event.stopPropagation()">
+          <ng-container *ngIf="editingCommentId !== sc.id">
+            <div class="comment-popover-meta">
+              <span class="comment-author">{{ sc.author }}</span>
+              <span class="comment-time">{{ sc.timestamp }}</span>
+            </div>
+            <p class="comment-text">{{ sc.text }}</p>
+            <div class="comment-actions">
+              <button class="comment-action-btn" type="button" (click)="startEdit(sc, $event)" title="Edit">
+                <nx-icon name="pen" size="s"></nx-icon>
+              </button>
+              <button class="comment-action-btn" type="button" (click)="closeComment(sc, $event); closePinPopover()" title="Close">
+                <nx-icon name="check" size="s"></nx-icon>
+              </button>
+              <button class="comment-action-btn" type="button" (click)="deleteComment(sc, $event); closePinPopover()" title="Delete">
+                <nx-icon name="trash-o" size="s"></nx-icon>
+              </button>
+            </div>
+          </ng-container>
+
+          <div class="comment-edit" *ngIf="editingCommentId === sc.id">
+            <textarea class="comment-input" rows="2" [(ngModel)]="editingText"></textarea>
+            <div class="comment-edit-actions">
+              <button nxButton="secondary small" type="button" (click)="cancelEdit($event)">Cancel</button>
+              <button nxButton="primary small" type="button" [disabled]="!editingText.trim()" (click)="saveEdit(sc, $event)">Save</button>
+            </div>
           </div>
         </div>
       </ng-container>
@@ -192,6 +224,7 @@
                 [getRowId]="getLimitsRowId"
                 [style.width]="limitsGridWidth"
                 [singleClickEdit]="true"
+                [popupParent]="popupParent"
                 (gridReady)="onLimitsGridReady($event)"
                 (columnResized)="onLimitsColumnResized($event)"
                 (cellValueChanged)="onLimitsCellValueChanged($event)"
@@ -218,6 +251,7 @@
                 [getRowId]="getDeductiblesRowId"
                 [style.width]="deductiblesGridWidth"
                 [singleClickEdit]="true"
+                [popupParent]="popupParent"
                 (gridReady)="onDeductiblesGridReady($event)"
                 (columnResized)="onDeductiblesColumnResized($event)"
                 (cellValueChanged)="onDeductiblesCellValueChanged($event)"
@@ -297,6 +331,7 @@
           [enableCellSpan]="true"
           [domLayout]="'autoHeight'"
           [singleClickEdit]="true"
+          [popupParent]="popupParent"
           (rowClicked)="onRowClicked($event)"
           (cellClicked)="onCellClicked($event)"
           (cellValueChanged)="onCellValueChanged($event)"
@@ -378,6 +413,7 @@
           [getRowId]="getTransitRowId"
           [domLayout]="'autoHeight'"
           [singleClickEdit]="true"
+          [popupParent]="popupParent"
           (cellClicked)="onTransitCellClicked($event)"
           (gridReady)="onTransitGridReady($event)"
           (contextmenu)="$event.preventDefault()"
@@ -456,7 +492,7 @@
           </ng-container>
 
           <div class="comment-list">
-            <div *ngFor="let c of comments" class="comment-item" [class.comment-item--highlighted]="c.id === highlightedCommentId" (click)="goToComment(c)">
+            <div *ngFor="let c of activeComments" class="comment-item" [class.comment-item--highlighted]="c.id === highlightedCommentId" (click)="goToComment(c)">
               <div class="comment-avatar">
                 <span *ngIf="c.pinNumber == null">{{ c.avatarInitials }}</span>
                 <span *ngIf="c.pinNumber != null" class="comment-pin-badge">{{ c.pinNumber }}</span>
@@ -466,10 +502,61 @@
                   <span class="comment-author">{{ c.author }}</span>
                   <span class="comment-time">{{ c.timestamp }}</span>
                 </div>
-                <p class="comment-text">{{ c.text }}</p>
+
+                <ng-container *ngIf="editingCommentId !== c.id">
+                  <p class="comment-text">{{ c.text }}</p>
+                  <div class="comment-actions" *ngIf="c.id === highlightedCommentId" (click)="$event.stopPropagation()">
+                    <button class="comment-action-btn" type="button" (click)="startEdit(c, $event)" title="Edit">
+                      <nx-icon name="pen" size="s"></nx-icon>
+                    </button>
+                    <button class="comment-action-btn" type="button" (click)="closeComment(c, $event)" title="Close">
+                      <nx-icon name="check" size="s"></nx-icon>
+                    </button>
+                    <button class="comment-action-btn" type="button" (click)="deleteComment(c, $event)" title="Delete">
+                      <nx-icon name="trash-o" size="s"></nx-icon>
+                    </button>
+                  </div>
+                </ng-container>
+
+                <div class="comment-edit" *ngIf="editingCommentId === c.id" (click)="$event.stopPropagation()">
+                  <textarea class="comment-input" rows="2" [(ngModel)]="editingText"></textarea>
+                  <div class="comment-edit-actions">
+                    <button nxButton="secondary small" type="button" (click)="cancelEdit($event)">Cancel</button>
+                    <button nxButton="primary small" type="button" [disabled]="!editingText.trim()" (click)="saveEdit(c, $event)">Save</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          <ng-container *ngIf="resolvedComments.length > 0">
+            <div class="ep-header ep-header--resolved">
+              <h3 class="ep-title">Resolved</h3>
+            </div>
+            <div class="comment-list">
+              <div *ngFor="let c of resolvedComments" class="comment-item comment-item--resolved" [class.comment-item--highlighted]="c.id === highlightedCommentId" (click)="goToComment(c)">
+                <div class="comment-avatar">
+                  <span *ngIf="c.pinNumber == null">{{ c.avatarInitials }}</span>
+                  <span *ngIf="c.pinNumber != null" class="comment-pin-badge">{{ c.pinNumber }}</span>
+                </div>
+                <div class="comment-content">
+                  <div class="comment-meta">
+                    <span class="comment-author">{{ c.author }}</span>
+                    <span class="comment-time">{{ c.timestamp }}</span>
+                  </div>
+                  <p class="comment-text">{{ c.text }}</p>
+                  <div class="comment-actions" *ngIf="c.id === highlightedCommentId" (click)="$event.stopPropagation()">
+                    <button class="comment-action-btn" type="button" (click)="closeComment(c, $event)" title="Reopen">
+                      <nx-icon name="undo" size="s"></nx-icon>
+                    </button>
+                    <button class="comment-action-btn" type="button" (click)="deleteComment(c, $event)" title="Delete">
+                      <nx-icon name="trash-o" size="s"></nx-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
         </ng-container>
       </div>
     </div>

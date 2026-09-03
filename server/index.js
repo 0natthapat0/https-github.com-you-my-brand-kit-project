@@ -33,6 +33,22 @@ app.post('/api/comments', (req, res) => {
   res.status(201).json(comment);
 });
 
+app.patch('/api/comments/:id', (req, res) => {
+  const comment = comments.find((c) => c.id === req.params.id);
+  if (!comment) return res.status(404).end();
+  Object.assign(comment, req.body);
+  broadcast({ type: 'comment:update', comment });
+  res.json(comment);
+});
+
+app.delete('/api/comments/:id', (req, res) => {
+  const index = comments.findIndex((c) => c.id === req.params.id);
+  if (index === -1) return res.status(404).end();
+  comments.splice(index, 1);
+  broadcast({ type: 'comment:delete', id: req.params.id });
+  res.status(204).end();
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 

@@ -194,6 +194,12 @@
   gap: 8px;
 }
 
+.comment-popover-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .comment-pin-badge {
   display: block;
 }
@@ -1394,6 +1400,52 @@
   color: #414141;
   margin: 0;
   line-height: 1.4;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.comment-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  color: #767676;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+
+  &:hover {
+    background: #dcedf7;
+    color: #007ab3;
+  }
+}
+
+.comment-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.comment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ep-header--resolved {
+  margin-top: 20px;
+}
+
+.comment-item--resolved {
+  opacity: .6;
 }
 
 .comment-input-wrap {
