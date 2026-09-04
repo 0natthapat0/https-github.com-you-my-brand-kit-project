@@ -149,10 +149,13 @@
 
         <div class="ins-meta">
           <span class="meta-item"><span class="meta-label">Product template:</span> {{ productTemplateLabel }}</span>
-          <ng-container *ngIf="selectedLob !== 'Marine Cargo'">
+          <ng-container *ngIf="selectedLob === 'Marine Cargo'; else nonMarineCoverageBasis">
+            <span class="meta-item"><span class="meta-label">Coverage basis:</span> Named-Perils</span>
+          </ng-container>
+          <ng-template #nonMarineCoverageBasis>
             <span class="meta-item"><span class="meta-label">Coverage basis:</span> All-Risk</span>
             <a class="meta-link" href="javascript:void(0)">See details</a>
-          </ng-container>
+          </ng-template>
           <span class="meta-item"><span class="meta-label">Covered sections:</span> {{ coveredSectionsLabel }}</span>
 
           <button class="meta-edit-btn" type="button" title="Edit">
