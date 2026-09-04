@@ -315,7 +315,7 @@ const parseShorthand = (val: any): number | null => {
 const SECTION_VALUES = ['PD', 'BI', 'PD & BI'];
 const OVERALL_LIMIT_TYPE_VALUES = ['Amount', 'Sum Insured'];
 const BI_INTEREST_VALUES = ['Gross Profit', 'Revenue', 'Rental Income', 'Other'];
-const OCCURRENCE_VALUES = ['Per Loss', 'Per Occurrence', 'Per Risk', 'Per Event'];
+const OCCURRENCE_VALUES = ['Per Loss', 'Per Occurrence'];
 const LIMIT_TYPE_VALUES = ['Amount'];
 // Exchange rates relative to EUR (units of currency per 1 EUR)
 const EXCHANGE_RATES_TO_EUR: Record<string, number> = {
@@ -1131,6 +1131,25 @@ export class CoveragesComponent implements OnInit {
     this.transitGridApi = params.api;
   }
 
+  // Switching Limit type / Deductible type on a Transit row shouldn't carry over the
+  // previous type's value — leave the value field empty so the user re-enters it.
+  onTransitCellValueChanged(event: any): void {
+    const field = event.colDef?.field;
+    if (field === 'limType') {
+      event.data.limValue = null;
+    } else if (field === 'dedLimitType') {
+      event.data.dedLimitValue = null;
+      event.data.dedMin = null;
+      event.data.dedMax = null;
+    } else {
+      return;
+    }
+    setTimeout(() => {
+      const node = this.transitGridApi.getRowNode(event.data.id);
+      if (node) this.transitGridApi.refreshCells({ rowNodes: [node], force: true });
+    });
+  }
+
   clearAllTransitFilters(): void {
     this.transitGridApi?.setFilterModel(null);
   }
@@ -1879,9 +1898,10 @@ export class CoveragesComponent implements OnInit {
     if (this.applyTransitModalType === 'limits') {
       const row = this.limitsRowData.find(r => r.section === 'Transit');
       if (!row) return [];
+      const isSumInsured = row.limType === 'Sum Insured';
       return [
-        { label: 'Limit Type', value: row.limType },
-        { label: 'Limit Value', value: this.formatTransitFieldValue(row.limValue, row.currency) },
+        { label: 'Limit Type', value: isSumInsured ? 'Amount' : row.limType },
+        { label: 'Limit Value', value: this.formatTransitFieldValue(isSumInsured ? row.limAggValue : row.limValue, row.currency) },
         { label: 'Occurrence', value: row.limOccurrence },
       ];
     }
@@ -1907,12 +1927,16 @@ export class CoveragesComponent implements OnInit {
     if (this.applyTransitModalType === 'limits') {
       const src = this.limitsRowData.find(r => r.section === 'Transit');
       if (src) {
+        // Sum Insured isn't a valid Limit type in the Transit tab — apply the optional
+        // Aggregate Amount as a plain Amount instead (only reachable when it's filled in).
+        const srcLimType = src.limType === 'Sum Insured' ? 'Amount' : src.limType;
+        const srcLimValue = src.limType === 'Sum Insured' ? src.limAggValue : src.limValue;
         this.transitAllData = this.transitAllData.map(r => {
           if (r.parentId === null) return r;
           return {
             ...r,
-            limType: overwriteAll || !r.limType ? src.limType : r.limType,
-            limValue: overwriteAll || r.limValue == null ? src.limValue : r.limValue,
+            limType: overwriteAll || !r.limType ? srcLimType : r.limType,
+            limValue: overwriteAll || r.limValue == null ? srcLimValue : r.limValue,
             limOccurrence: overwriteAll || !r.limOccurrence ? src.limOccurrence : r.limOccurrence,
           };
         });
@@ -2364,6 +2388,10 @@ export class CoveragesComponent implements OnInit {
     if (data == null) return false;
     if ('limType' in data) {
       // Overall Limits row.
+      // "Sum Insured" isn't a valid Limit type in the Transit tab (only "Amount" is), so a
+      // Transit row set to Sum Insured can't be applied there — unless the optional Aggregate
+      // Amount has been filled in, which gives us a concrete Amount-compatible value to apply.
+      if (data.limType === 'Sum Insured') return !!data.limOccurrence && data.limAggValue != null;
       return !!data.limType && !!data.limOccurrence
         && (data.limType !== 'Amount' || data.limValue != null);
     }

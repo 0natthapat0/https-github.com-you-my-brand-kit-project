@@ -149,8 +149,10 @@
 
         <div class="ins-meta">
           <span class="meta-item"><span class="meta-label">Product template:</span> {{ productTemplateLabel }}</span>
-          <span class="meta-item"><span class="meta-label">Coverage basis:</span> All-Risk</span>
-          <a class="meta-link" href="javascript:void(0)">See details</a>
+          <ng-container *ngIf="selectedLob !== 'Marine Cargo'">
+            <span class="meta-item"><span class="meta-label">Coverage basis:</span> All-Risk</span>
+            <a class="meta-link" href="javascript:void(0)">See details</a>
+          </ng-container>
           <span class="meta-item"><span class="meta-label">Covered sections:</span> {{ coveredSectionsLabel }}</span>
 
           <button class="meta-edit-btn" type="button" title="Edit">
@@ -415,6 +417,7 @@
           [singleClickEdit]="true"
           [popupParent]="popupParent"
           (cellClicked)="onTransitCellClicked($event)"
+          (cellValueChanged)="onTransitCellValueChanged($event)"
           (gridReady)="onTransitGridReady($event)"
           (contextmenu)="$event.preventDefault()"
         />
