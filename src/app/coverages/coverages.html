@@ -149,13 +149,10 @@
 
         <div class="ins-meta">
           <span class="meta-item"><span class="meta-label">Product template:</span> {{ productTemplateLabel }}</span>
-          <ng-container *ngIf="selectedLob === 'Marine Cargo'; else nonMarineCoverageBasis">
-            <span class="meta-item"><span class="meta-label">Coverage basis:</span> Named-Perils</span>
-          </ng-container>
-          <ng-template #nonMarineCoverageBasis>
+          <ng-container *ngIf="selectedLob !== 'Marine Cargo'">
             <span class="meta-item"><span class="meta-label">Coverage basis:</span> All-Risk</span>
             <a class="meta-link" href="javascript:void(0)">See details</a>
-          </ng-template>
+          </ng-container>
           <span class="meta-item"><span class="meta-label">Covered sections:</span> {{ coveredSectionsLabel }}</span>
 
           <button class="meta-edit-btn" type="button" title="Edit">
@@ -167,7 +164,7 @@
           <button class="ins-tab" [class.active]="activeTab === 'overall'" (click)="activeTab = 'overall'" type="button">
             Overall Limits/Deductibles
           </button>
-          <button class="ins-tab" *ngIf="selectedLob === 'Marine Cargo'" disabled type="button">
+          <button class="ins-tab" *ngIf="selectedLob === 'Marine Cargo'" [class.active]="activeTab === 'coverage'" (click)="activeTab = 'coverage'" type="button">
             Coverage Sublimits/Deductibles
           </button>
           <button class="ins-tab" [class.active]="activeTab === 'sublimits'" (click)="activeTab = 'sublimits'" type="button">
@@ -226,6 +223,7 @@
                 [columnDefs]="limitsColDefs"
                 [defaultColDef]="overallGridDefaultColDef"
                 [domLayout]="'autoHeight'"
+                [suppressHorizontalScroll]="true"
                 [getRowId]="getLimitsRowId"
                 [style.width]="limitsGridWidth"
                 [singleClickEdit]="true"
@@ -253,6 +251,7 @@
                 [columnDefs]="deductiblesColDefs"
                 [defaultColDef]="overallGridDefaultColDef"
                 [domLayout]="'autoHeight'"
+                [suppressHorizontalScroll]="true"
                 [getRowId]="getDeductiblesRowId"
                 [style.width]="deductiblesGridWidth"
                 [singleClickEdit]="true"
@@ -270,8 +269,17 @@
         </div>
       </ng-container>
 
+      <!-- ── Coverage Sublimits/Deductibles empty state (Marine Cargo) ── -->
+      <ng-container *ngIf="activeTab === 'coverage' && selectedLob === 'Marine Cargo'">
+        <div class="coverage-empty-state">
+          <h3 class="coverage-empty-title">Start by adding an coverage</h3>
+          <p class="coverage-empty-sub">Click Add coverage to manage them from here.</p>
+          <button nxButton="secondary small" type="button" disabled>Add Coverage</button>
+        </div>
+      </ng-container>
+
       <!-- ── Coverage Sublimits/Deductibles tab ────────────────── -->
-      <ng-container *ngIf="activeTab === 'coverage' || (activeTab === 'sublimits' && selectedLob !== 'Marine Cargo')">
+      <ng-container *ngIf="(activeTab === 'coverage' || activeTab === 'sublimits') && selectedLob !== 'Marine Cargo'">
 
       <!-- Toolbar -->
       <div class="page-toolbar">
@@ -397,10 +405,10 @@
             Clear all filters
           </button>
           <button nxButton="secondary small" type="button" (click)="addTransitLocation()">
-            Add Segment Breakdowns
+            Add Segment Breakdown
           </button>
           <button nxButton="primary small" type="button" (click)="addTransitComponent()">
-            Add Segments
+            Add Segment
           </button>
         </div>
       </div>
@@ -708,7 +716,7 @@
   <div class="action-dropdown" *ngIf="limitsActionMenuOpen"
     [style.top.px]="actionMenuPos.top" [style.left.px]="actionMenuPos.left">
     <button class="action-dropdown-item" (click)="applyToTransitTab('limits')">
-      Apply to transit tab
+      Apply to Segments
     </button>
   </div>
 
@@ -716,7 +724,7 @@
   <div class="action-dropdown" *ngIf="deductiblesActionMenuOpen"
     [style.top.px]="actionMenuPos.top" [style.left.px]="actionMenuPos.left">
     <button class="action-dropdown-item" (click)="applyToTransitTab('deductibles')">
-      Apply to transit tab
+      Apply to Segments
     </button>
   </div>
 
@@ -822,14 +830,14 @@
       </button>
       <div class="apply-transit-header">
         <span class="apply-transit-warn-icon">!</span>
-        <span class="apply-transit-title">Apply to Transit tab</span>
+        <span class="apply-transit-title">Apply to Segments</span>
       </div>
       <div class="modal-body apply-transit-body">
         <p class="apply-transit-desc">
-          Applying will overwrite the existing Transit {{ applyTransitModalType === 'limits' ? 'limit' : 'deductible' }} values.
+          This action will automatically update {{ applyTransitModalType === 'limits' ? 'Limit' : 'Deductible' }} data on tab Transit Sublimit/Deductible
         </p>
         <p class="apply-transit-desc">
-          The following values from Overall {{ applyTransitModalType === 'limits' ? 'Limits' : 'Deductibles' }} will be copied to the selected fields in the Transit Sublimits/Deductibles tab:
+          The following fields will be copied over:
         </p>
         <ul class="apply-transit-list">
           <li *ngFor="let f of applyTransitFields">{{ f.label }}: <strong>{{ f.value }}</strong></li>
@@ -837,7 +845,7 @@
       </div>
       <div class="modal-footer apply-transit-footer">
         <button nxButton="secondary small" type="button" (click)="closeApplyTransitModal()">Cancel</button>
-        <button nxButton="secondary small" type="button" (click)="applyToTransitOnlyEmpty()">Apply to only empty cells</button>
+        <button nxButton="secondary small" type="button" (click)="applyToTransitOnlyEmpty()">Only apply to empty cells</button>
         <button nxButton="primary small" type="button" (click)="applyToTransitOverwriteAll()">Overwrite all</button>
       </div>
     </div>

@@ -181,24 +181,6 @@ const MARINE_CARGO_LIMITS_DATA: OverallLimitRow[] = [
     biIp: null, biIpUnit: '', biInterest: '',
   },
   {
-    id: 'lim-storage-noncat', section: 'Storage (Non-CAT)', currency: 'EUR',
-    sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Loss', limAggValue: null,
-    biIp: null, biIpUnit: '', biInterest: '',
-  },
-  {
-    id: 'lim-storage-cat', section: 'Storage CAT', currency: 'EUR',
-    sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Loss', limAggValue: null,
-    biIp: null, biIpUnit: '', biInterest: '',
-  },
-  {
-    id: 'lim-dsu', section: 'Delay in Startup (DSU)', currency: 'EUR',
-    sumInsured: null, limType: 'Amount', limValue: null,
-    limOccurrence: 'Per Loss', limAggValue: null,
-    biIp: 12, biIpUnit: 'Months', biInterest: 'Gross Profit',
-  },
-  {
     id: 'lim-war', section: 'War', currency: 'EUR',
     sumInsured: 10_050_000_000, limType: 'Amount', limValue: null,
     limOccurrence: 'Per Loss', limAggValue: null,
@@ -209,24 +191,6 @@ const MARINE_CARGO_LIMITS_DATA: OverallLimitRow[] = [
 const MARINE_CARGO_DEDUCTIBLES_DATA: OverallDeductibleRow[] = [
   {
     id: 'ded-transit', section: 'Transit', currency: 'EUR',
-    retentionType: 'Standard Deductible', deductibleType: 'Amount',
-    dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Loss', dedAggValue: null,
-  },
-  {
-    id: 'ded-storage-noncat', section: 'Storage (Non-CAT)', currency: 'EUR',
-    retentionType: 'Standard Deductible', deductibleType: 'Amount',
-    dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Loss', dedAggValue: null,
-  },
-  {
-    id: 'ded-storage-cat', section: 'Storage CAT', currency: 'EUR',
-    retentionType: 'Standard Deductible', deductibleType: 'Amount',
-    dedValue: null, dedMin: null, dedMax: null,
-    dedOccurrence: 'Per Loss', dedAggValue: null,
-  },
-  {
-    id: 'ded-dsu', section: 'Delay in Startup (DSU)', currency: 'EUR',
     retentionType: 'Standard Deductible', deductibleType: 'Amount',
     dedValue: null, dedMin: null, dedMax: null,
     dedOccurrence: 'Per Loss', dedAggValue: null,
@@ -313,7 +277,6 @@ const parseShorthand = (val: any): number | null => {
 };
 
 const SECTION_VALUES = ['PD', 'BI', 'PD & BI'];
-const OVERALL_LIMIT_TYPE_VALUES = ['Amount', 'Sum Insured'];
 const BI_INTEREST_VALUES = ['Gross Profit', 'Revenue', 'Rental Income', 'Other'];
 const OCCURRENCE_VALUES = ['Per Loss', 'Per Occurrence'];
 const LIMIT_TYPE_VALUES = ['Amount'];
@@ -350,9 +313,11 @@ const convertCurrency = (value: number, from: string, to: string): number => {
 const BI_IP_UNIT_VALUES = ['Days', 'Weeks', 'Months'];
 const RETENTION_TYPE_VALUES = ['Standard Deductible', 'Excess', 'Franchise'];
 const DEDUCTIBLE_TYPE_VALUES = ['Standard Deductible', 'Franchise', 'Excess'];
-const OVERALL_DEDUCTIBLE_TYPE_VALUES_PD = ['Amount', '% of Sum Insured', '% of Loss', '% of VARTOL'];
-const OVERALL_DEDUCTIBLE_TYPE_VALUES_BI = ['Amount', 'Number of days'];
-const OVERALL_DEDUCTIBLE_TYPE_VALUES_ALL = ['Amount', '% of Sum Insured', '% of Loss', '% of VARTOL', 'Number of days'];
+// Neither the Overall Limits/Deductibles table nor the Transit tab's "Deductible Type"
+// column offer "% of VARTOL" or "Number of days".
+const OVERALL_TABLE_DEDUCTIBLE_TYPE_PD = ['Amount', '% of Sum Insured', '% of Loss'];
+const OVERALL_TABLE_DEDUCTIBLE_TYPE_BI = ['Amount'];
+const OVERALL_TABLE_DEDUCTIBLE_TYPE_ALL = ['Amount', '% of Sum Insured', '% of Loss'];
 const isPercentDeductibleType = (type: string | undefined) =>
   type === '% of Sum Insured' || type === '% of Loss' || type === '% of VARTOL';
 
@@ -782,13 +747,31 @@ export class CoveragesComponent implements OnInit {
     this.newPinCommentText = '';
   }
 
+  // Every visitor to this shared mockup should show up under their own name rather than
+  // the hardcoded "You"/"JD" placeholder — ask once per browser and remember the answer.
+  private getCommenterIdentity(): { author: string; avatarInitials: string } {
+    let name = localStorage.getItem('commenterName');
+    if (!name) {
+      name = (window.prompt('Your name, for comments:') || '').trim() || 'Anonymous';
+      localStorage.setItem('commenterName', name);
+    }
+    const initials = name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0].toUpperCase())
+      .join('') || '?';
+    return { author: name, avatarInitials: initials };
+  }
+
   submitPendingComment(): void {
     const text = this.newPinCommentText.trim();
     if (!text || !this.pendingComment) return;
     const pinNumber = this.nextPinNumber++;
+    const { author, avatarInitials } = this.getCommenterIdentity();
     this.commentsService.create({
-      author: 'You',
-      avatarInitials: 'JD',
+      author,
+      avatarInitials,
       timestamp: 'Just now',
       text,
       x: this.pendingComment.x,
@@ -1129,6 +1112,8 @@ export class CoveragesComponent implements OnInit {
 
   onTransitGridReady(params: GridReadyEvent) {
     this.transitGridApi = params.api;
+    // Size every column to fit its header + cell content so nothing gets truncated.
+    setTimeout(() => params.api.autoSizeAllColumns());
   }
 
   // Switching Limit type / Deductible type on a Transit row shouldn't carry over the
@@ -1417,7 +1402,7 @@ export class CoveragesComponent implements OnInit {
           field: 'limAggValue',
           headerName: 'Aggregate amount (optional)',
           type: 'rightAligned',
-          width: 190,
+          width: 230,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => !this.sublimitsLocked && isLeaf(p),
           cellEditor: 'agTextCellEditor',
@@ -1527,7 +1512,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedMin',
           headerName: 'Min (optional)',
           type: 'rightAligned',
-          width: 140,
+          width: 170,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => !this.sublimitsLocked && isLeaf(p),
           cellEditor: 'agTextCellEditor',
@@ -1542,7 +1527,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedMax',
           headerName: 'Max (optional)',
           type: 'rightAligned',
-          width: 140,
+          width: 170,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => !this.sublimitsLocked && isLeaf(p),
           cellEditor: 'agTextCellEditor',
@@ -1568,7 +1553,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedAggValue',
           headerName: 'Aggregate amount (optional)',
           type: 'rightAligned',
-          width: 190,
+          width: 230,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => !this.sublimitsLocked && isLeaf(p),
           cellEditor: 'agTextCellEditor',
@@ -1612,6 +1597,8 @@ export class CoveragesComponent implements OnInit {
 
   onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
+    // Size every column to fit its header + cell content so nothing gets truncated.
+    setTimeout(() => params.api.autoSizeAllColumns());
   }
 
   // ── Transit grid config ────────────────────────────────────────
@@ -1746,7 +1733,7 @@ export class CoveragesComponent implements OnInit {
           filter: 'agTextColumnFilter',
           editable: (p: any) => isLeaf(p),
           cellEditor: 'agSelectCellEditor',
-          cellEditorParams: { values: OVERALL_DEDUCTIBLE_TYPE_VALUES_ALL },
+          cellEditorParams: { values: OVERALL_TABLE_DEDUCTIBLE_TYPE_ALL },
           cellRenderer: forLeaf((p) => dropCell(p.value)),
         },
         {
@@ -1765,7 +1752,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedMin',
           headerName: 'Min (optional)',
           type: 'rightAligned',
-          width: 140,
+          width: 170,
           filter: 'agNumberColumnFilter',
           // "Amount" deductibles have no Min/Max range — only other deductible types (percent-based,
           // number of days) can define one.
@@ -1782,7 +1769,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedMax',
           headerName: 'Max (optional)',
           type: 'rightAligned',
-          width: 140,
+          width: 170,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => isLeaf(p) && p.data?.dedLimitType !== 'Amount',
           cellEditor: 'agTextCellEditor',
@@ -1807,7 +1794,7 @@ export class CoveragesComponent implements OnInit {
           field: 'dedAggValue',
           headerName: 'Aggregate amount (optional)',
           type: 'rightAligned',
-          width: 190,
+          width: 230,
           filter: 'agNumberColumnFilter',
           editable: (p: any) => isLeaf(p),
           cellEditor: 'agTextCellEditor',
@@ -1900,18 +1887,20 @@ export class CoveragesComponent implements OnInit {
       if (!row) return [];
       const isSumInsured = row.limType === 'Sum Insured';
       return [
-        { label: 'Limit Type', value: isSumInsured ? 'Amount' : row.limType },
-        { label: 'Limit Value', value: this.formatTransitFieldValue(isSumInsured ? row.limAggValue : row.limValue, row.currency) },
+        { label: 'Limit Value', value: isSumInsured ? 'Amount' : row.limType },
+        { label: 'Limit Amount', value: this.formatTransitFieldValue(isSumInsured ? row.limAggValue : row.limValue, row.currency) },
         { label: 'Occurrence', value: row.limOccurrence },
+        { label: 'Aggregate Amount (only if entered)', value: this.formatTransitFieldValue(row.limAggValue, row.currency) },
       ];
     }
     const row = this.deductiblesRowData.find(r => r.section === 'Transit');
     if (!row) return [];
     return [
       { label: 'Retention Type', value: row.retentionType },
-      { label: 'Deductible Type', value: row.deductibleType },
-      { label: 'Deductible Value', value: this.formatTransitFieldValue(row.dedValue, row.currency) },
+      { label: 'Deductible Value', value: row.deductibleType },
+      { label: 'Deductible Amount', value: this.formatTransitFieldValue(row.dedValue, row.currency) },
       { label: 'Occurrence', value: row.dedOccurrence },
+      { label: 'Aggregate Amount (only if entered)', value: this.formatTransitFieldValue(row.dedAggValue, row.currency) },
     ];
   }
 
@@ -1938,6 +1927,7 @@ export class CoveragesComponent implements OnInit {
             limType: overwriteAll || !r.limType ? srcLimType : r.limType,
             limValue: overwriteAll || r.limValue == null ? srcLimValue : r.limValue,
             limOccurrence: overwriteAll || !r.limOccurrence ? src.limOccurrence : r.limOccurrence,
+            limAggValue: overwriteAll || r.limAggValue == null ? src.limAggValue : r.limAggValue,
           };
         });
       }
@@ -1952,6 +1942,7 @@ export class CoveragesComponent implements OnInit {
             dedLimitType: overwriteAll || !r.dedLimitType ? src.deductibleType : r.dedLimitType,
             dedLimitValue: overwriteAll || r.dedLimitValue == null ? src.dedValue : r.dedLimitValue,
             dedOccurrence: overwriteAll || !r.dedOccurrence ? src.dedOccurrence : r.dedOccurrence,
+            dedAggValue: overwriteAll || r.dedAggValue == null ? src.dedAggValue : r.dedAggValue,
           };
         });
       }
@@ -2277,6 +2268,7 @@ export class CoveragesComponent implements OnInit {
   private recalcLimitsWidth(): void {
     setTimeout(() => {
       if (this.limitsGridApi) {
+        this.limitsGridApi.autoSizeAllColumns();
         const w = this.limitsGridApi.getColumnState().reduce((s, c) => s + (c.width ?? 0), 0);
         this.limitsGridWidth = w + 'px';
       }
@@ -2287,6 +2279,7 @@ export class CoveragesComponent implements OnInit {
   private recalcDeductiblesWidth(): void {
     setTimeout(() => {
       if (this.deductiblesGridApi) {
+        this.deductiblesGridApi.autoSizeAllColumns();
         const w = this.deductiblesGridApi.getColumnState().reduce((s, c) => s + (c.width ?? 0), 0);
         this.deductiblesGridWidth = w + 'px';
       }
@@ -2305,6 +2298,8 @@ export class CoveragesComponent implements OnInit {
   onLimitsGridReady(params: GridReadyEvent) {
     this.limitsGridApi = params.api;
     setTimeout(() => {
+      // Size every column to fit its header + cell content so nothing gets truncated.
+      params.api.autoSizeAllColumns();
       const w = params.api.getColumnState().reduce((s, c) => s + (c.width ?? 0), 0);
       this.limitsGridWidth = w + 'px';
       this.cdr.detectChanges();
@@ -2314,6 +2309,8 @@ export class CoveragesComponent implements OnInit {
   onDeductiblesGridReady(params: GridReadyEvent) {
     this.deductiblesGridApi = params.api;
     setTimeout(() => {
+      // Size every column to fit its header + cell content so nothing gets truncated.
+      params.api.autoSizeAllColumns();
       const w = params.api.getColumnState().reduce((s, c) => s + (c.width ?? 0), 0);
       this.deductiblesGridWidth = w + 'px';
       this.cdr.detectChanges();
@@ -2492,11 +2489,9 @@ export class CoveragesComponent implements OnInit {
       width: 150,
       editable: () => !this.isDraft,
       cellEditor: 'agSelectCellEditor',
-      // Without Sum Insured data there's nothing to base a "Sum Insured" limit type on,
-      // so that option is unavailable and only "Amount" can be selected.
-      cellEditorParams: (p: any) => ({
-        values: p.data?.sumInsured == null ? ['Amount'] : OVERALL_LIMIT_TYPE_VALUES,
-      }),
+      // "Sum Insured" is no longer a selectable Limit type — the Sum Insured column
+      // still shows that value, but Limit type only ever offers "Amount".
+      cellEditorParams: { values: ['Amount'] },
       cellRenderer: (p: any) => dropCell(p.value, this.isDraft),
     } as ColDef<OverallLimitRow>,
     {
@@ -2530,7 +2525,7 @@ export class CoveragesComponent implements OnInit {
       field: 'limAggValue',
       headerName: 'Aggregate Amount (Optional)',
       type: 'rightAligned',
-      width: 220,
+      width: 230,
       editable: () => !this.isDraft,
       cellEditor: 'agTextCellEditor',
       valueParser: (p: any) => parseShorthand(p.newValue),
@@ -2613,9 +2608,9 @@ export class CoveragesComponent implements OnInit {
       editable: () => !this.isDraft,
       cellEditor: 'agSelectCellEditor',
       cellEditorParams: (p: any) => ({
-        values: p.data?.section === 'BI' ? OVERALL_DEDUCTIBLE_TYPE_VALUES_BI
-          : p.data?.section === 'PD' ? OVERALL_DEDUCTIBLE_TYPE_VALUES_PD
-          : OVERALL_DEDUCTIBLE_TYPE_VALUES_ALL,
+        values: p.data?.section === 'BI' ? OVERALL_TABLE_DEDUCTIBLE_TYPE_BI
+          : p.data?.section === 'PD' ? OVERALL_TABLE_DEDUCTIBLE_TYPE_PD
+          : OVERALL_TABLE_DEDUCTIBLE_TYPE_ALL,
       }),
       cellRenderer: (p: any) => dropCell(p.value, this.isDraft),
     } as ColDef<OverallDeductibleRow>,
@@ -2646,7 +2641,7 @@ export class CoveragesComponent implements OnInit {
       field: 'dedMin',
       headerName: 'Min (Optional)',
       type: 'rightAligned',
-      width: 150,
+      width: 170,
       // "Amount" deductibles have no Min/Max range — only other deductible types (percent-based,
       // number of days) can define one.
       editable: (p: any) => !this.isDraft && p.data?.deductibleType !== 'Amount',
@@ -2662,7 +2657,7 @@ export class CoveragesComponent implements OnInit {
       field: 'dedMax',
       headerName: 'Max (Optional)',
       type: 'rightAligned',
-      width: 150,
+      width: 170,
       editable: (p: any) => !this.isDraft && p.data?.deductibleType !== 'Amount',
       cellEditor: 'agTextCellEditor',
       valueParser: (p: any) => parseShorthand(p.newValue),
@@ -2685,7 +2680,7 @@ export class CoveragesComponent implements OnInit {
       field: 'dedAggValue',
       headerName: 'Aggregate Amount (Optional)',
       type: 'rightAligned',
-      width: 220,
+      width: 230,
       minWidth: 160,
       editable: () => !this.isDraft,
       cellEditor: 'agTextCellEditor',
